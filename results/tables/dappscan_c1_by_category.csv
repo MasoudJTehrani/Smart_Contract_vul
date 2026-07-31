@@ -1,0 +1,9 @@
+category,n,events,coef,p,note
+reentrancy,62,9,-0.8338748292668665,0.04150814859970495,
+arithmetic,121,87,-0.29031081938413156,0.40241929823449407,
+denial_service,68,37,-0.16599182577615013,0.6460090537116885,
+access_control,92,40,-0.09639567761562105,0.7791387537937817,
+bad_randomness,16,16,,,insufficient variation
+front_running,47,47,,,insufficient variation
+time_manipulation,17,1,,,too few observations
+unchecked_low_calls,54,3,,,too few observations
