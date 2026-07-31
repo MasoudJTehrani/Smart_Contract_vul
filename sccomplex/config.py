@@ -20,7 +20,16 @@ SALZANO_DIR = DATA_RAW / "salzano"
 DAPPSCAN_REPO = "https://github.com/InPlusLab/DAppSCAN.git"
 DAPPSCAN_DIR = DATA_RAW / "dappscan"
 
+# FORGE (ICSE 2026). Third corpus: 6,571 projects, labels extracted from real
+# audit reports by an LLM pipeline. Used to break the reentrancy tie between
+# the first two corpora.
+FORGE_REPO = "https://github.com/shenyimings/FORGE-Artifacts.git"
+FORGE_DIR = DATA_RAW / "forge"
+
 # The 21 metrics of Solmet (Hegedus 2019), as used in Paper 1.
+# NOTE: the metric named "NA" (number of attributes) is read back from CSV as a
+# missing value unless readers pass keep_default_na=False. Any script that
+# reloads a results table must do so.
 SOLMET_METRICS = [
     "SLOC", "LLOC", "CLOC", "NF", "WMC", "NL", "NLE", "NUMPAR", "NOS",
     "DIT", "NOA", "NOD", "CBO", "NA", "NOI",

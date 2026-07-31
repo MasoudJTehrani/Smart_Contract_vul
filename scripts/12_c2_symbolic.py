@@ -141,7 +141,11 @@ def main() -> int:
     print("\n" + "=" * 78)
     print("Comparison with the main corpus")
     print("=" * 78)
-    ref = pd.read_csv(TABLES / "rq3_analysis_failure.csv", index_col=0)
+    # keep_default_na=False: one metric is literally named "NA" (number of
+    # attributes) and pandas otherwise reads it back as a missing value.
+    ref = pd.read_csv(TABLES / "rq3_analysis_failure.csv", index_col=0,
+                      keep_default_na=False)
+    ref[["coef", "p"]] = ref[["coef", "p"]].astype(float)
     ref_tool = pd.read_csv(TABLES / "slopes_by_tool_failed.csv")
 
     main_myth = ref_tool.loc[ref_tool["tool"] == "mythril", "coef"]

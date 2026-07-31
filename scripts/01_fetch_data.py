@@ -22,6 +22,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from sccomplex.config import (  # noqa: E402
     DAPPSCAN_DIR,
     DAPPSCAN_REPO,
+    FORGE_DIR,
+    FORGE_REPO,
     SALZANO_DIR,
     SALZANO_REPO,
 )
@@ -53,7 +55,9 @@ def clone(repo: str, dest: Path, sparse: list[str] | None = None) -> bool:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--with-dappscan", action="store_true",
-                    help="also fetch DAppSCAN (large; only needed for the external-validity step)")
+                    help="also fetch DAppSCAN (large; needed for RQ7/RQ8)")
+    ap.add_argument("--with-forge", action="store_true",
+                    help="also fetch FORGE (large; needed for RQ9)")
     args = ap.parse_args()
 
     print("Salzano et al. replication package (required):")
@@ -74,15 +78,46 @@ def main() -> int:
     print("  all required files present")
 
     if args.with_dappscan:
-        print("\nDAppSCAN (optional):")
+        print("\nDAppSCAN (optional, needed for RQ7/RQ8):")
         clone(
             DAPPSCAN_REPO,
             DAPPSCAN_DIR,
             sparse=["DAppSCAN-source/SWCsource", "DAppSCAN-source/contracts"],
         )
+        print("  note: scripts/08 needs the enclosing project trees for imports "
+              "to resolve;\n        widen sparse-checkout if compiles fail.")
+
+    if args.with_forge:
+        print("\nFORGE (optional, needed for RQ9):")
+        # Two stages: the results metadata is small and is all that is needed to
+        # decide which project trees to fetch, so the contract sources are
+        # checked out only for the projects actually analysed.
+        if clone(FORGE_REPO, FORGE_DIR, sparse=["dataset/results"]):
+            _fetch_forge_projects()
 
     print("\nnext: ./run.sh scripts/02_extract_metrics.py")
     return 0
+
+
+def _fetch_forge_projects() -> None:
+    """Sparse-checkout only the FORGE projects with a reentrancy finding."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from sccomplex.data import forge
+
+    gt = forge.load_ground_truth()
+    paths = sorted(gt.loc[gt["category"] == "reentrancy", "project_path"].unique())
+    if not paths:
+        print("  no reentrancy projects found in FORGE results", file=sys.stderr)
+        return
+
+    patterns = ["/dataset/results/"] + [f"/dataset/{p}/" for p in paths]
+    print(f"  fetching sources for {len(paths)} reentrancy projects")
+    subprocess.run(
+        ["git", "-C", str(FORGE_DIR), "sparse-checkout", "set", "--no-cone", "--stdin"],
+        input="\n".join(patterns), text=True, check=False,
+    )
+    n = len(list((FORGE_DIR / "dataset" / "contracts").rglob("*.sol")))
+    print(f"  {n} .sol files checked out")
 
 
 if __name__ == "__main__":

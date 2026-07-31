@@ -1,3 +1,4 @@
+# Core analysis pipeline (scripts 02-07, 09, 12-13).
 matplotlib==3.11.1
 numpy==2.4.6
 pandas==3.0.5
@@ -11,3 +12,11 @@ statsmodels==0.14.6
 tqdm==4.67.1
 tree-sitter==0.26.0
 tree-sitter-solidity==1.2.13
+
+# Detector toolchain, required only for the external-validity steps
+# (scripts 08, 11, 13). Mythril pins older eth-* packages and needs
+# setuptools<81, since it imports pkg_resources which setuptools 81 removed.
+slither-analyzer==0.11.6
+mythril==0.24.8
+solc-select==1.2.0
+setuptools<81

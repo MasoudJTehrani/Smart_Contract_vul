@@ -43,6 +43,7 @@ instrument; Salzano contributes 40,252 detection outcomes. Joining them is new.
 | Line-level manual ground truth (DASP-10) | Salzano et al. | **theirs** — cite |
 | Tool-check → DASP category mapping | Salzano et al. | **theirs** — cite |
 | SWC ground truth from 1,199 audit reports | DAppSCAN (TSE'24) | **theirs** — cite |
+| Audit findings from 6,571 projects (CWE) | FORGE (ICSE'26) | **theirs** — cite |
 | 21 Solmet complexity metrics | this repo (`sccomplex/metrics/solmet.py`) | **ours** |
 | Slither runs on DAppSCAN | this repo (`sccomplex/detect/`) | **ours** |
 | Panel construction, statistical models, triage model | this repo | **ours** |
@@ -78,6 +79,10 @@ PYTHONNOUSERSITE=1 ~/miniconda3/envs/scvul/bin/python -m pip install slither-ana
 ./run.sh scripts/09_dappscan_replicate.py  # RQ7  do the findings replicate?
 ./run.sh scripts/11_dappscan_mythril.py --remap --workers 16   # symbolic executor
 ./run.sh scripts/12_c2_symbolic.py         # RQ8  symbolic vs static interaction
+
+# third corpus (optional; needed for RQ9)
+./run.sh scripts/01_fetch_data.py --with-forge
+./run.sh scripts/13_forge_reentrancy.py --workers 24 --max-files 20
 
 # tests
 ./run.sh -m pytest tests/ -q
@@ -412,6 +417,39 @@ finding:
 This is the study's one positive cross-corpus finding, and it is a claim about
 detector *classes*, not about individual metrics.
 
+### RQ9 — A third corpus withdraws the category-specific mechanism
+
+The reentrancy result carried the C1 claim and rested on 9 misses, so we added
+FORGE (ICSE'26): 6,571 audited projects, of which **350 carry a reentrancy
+finding**. Scoring is per project and deliberately generous — detected if
+Slither flags reentrancy in *any* file — because FORGE findings carry free-text
+locations, not line numbers. Generosity biases *against* the
+"complexity-hurts-detection" hypothesis, the conservative direction here.
+
+133 of 350 projects had an analysable file (median project SLOC 1,696). Slither
+missed **76.7%** of audit-reported reentrancy.
+
+| corpus | ground truth | n | LLOC coef | p |
+|---|---|---:|---:|---:|
+| Salzano (main) | researcher annotation | 1,405 | **+0.278** | **0.0001** |
+| DAppSCAN | human report extraction | 62 | **−0.834** | **0.041** |
+| FORGE | LLM report extraction | 133 | −0.314 | 0.105 |
+
+**Three corpora, two signs, no consistent effect.** The category-specific
+mechanism is **withdrawn**: reentrancy detection neither reliably degrades nor
+improves with complexity — the effect is not identifiable across corpora.
+
+Two observations recorded as hypotheses, not findings:
+
+- In FORGE, coupling predicts *better* reentrancy detection, strongly (CBO
+  −0.635 p=0.002; NA −0.472 p=0.029; NUMPAR −0.459 p=0.044). Pattern-based
+  detectors fire on trigger sites, so code with more external calls may yield
+  more true positives mechanically — making "complexity helps detection" an
+  artefact of detector design.
+- With n=3 corpora, the sign appears to track **label provenance** (researcher
+  annotation positive, audit-report extraction negative) rather than corpus
+  size or category mix. Too weak to advance; noted for future work.
+
 ### Sample loss in source-based tool evaluation
 
 Before dependencies were vendored, the analysable subsample looked strongly
@@ -514,6 +552,17 @@ robustness, triage model).
 
 **Do not report without re-checking:** slither, securify and confuzzius
 detection slopes (sign-unstable across specifications).
+
+## Manuscript
+
+The draft is [`paper/draft.md`](paper/draft.md). Every number in it is produced
+by this pipeline and traceable to a CSV in `results/tables/`; a verification
+script checks all 55 numeric claims against those tables.
+
+Claims that did not survive robustness or replication testing are reported as
+negative results rather than dropped — including two the authors initially
+believed (Slither's detection slope, and an apparent complexity bias in
+compilability).
 
 ## Repository layout
 
