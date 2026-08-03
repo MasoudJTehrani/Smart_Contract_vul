@@ -71,6 +71,46 @@ def select_metrics(df: pd.DataFrame, metrics=None, threshold: float = 0.9) -> li
         keep.remove(drop)
 
 
+def vif_prune(
+    df: pd.DataFrame, metrics: list[str], threshold: float = 5.0
+) -> tuple[list[str], pd.DataFrame]:
+    """Drop metrics until every remaining one has VIF below `threshold`.
+
+    Pairwise rank-correlation screening at |rho| >= 0.9 is not sufficient here:
+    a metric can be uncorrelated with each of the others individually and still
+    be an almost exact linear combination of several of them. On this corpus
+    the rho-screened set of 13 still reaches VIF 58, which is precisely the
+    instability the redundancy analysis was supposed to prevent.
+
+    Metrics are removed one at a time, highest VIF first, recomputing after
+    each removal. Deterministic given the input ordering.
+    """
+    from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+    keep = list(metrics)
+    history = []
+    while len(keep) > 1:
+        d = df[keep].dropna()
+        X = np.column_stack([np.ones(len(d)), d.to_numpy()])
+        vifs = pd.Series(
+            [variance_inflation_factor(X, i + 1) for i in range(len(keep))], index=keep
+        )
+        worst, worst_vif = vifs.idxmax(), vifs.max()
+        if worst_vif < threshold:
+            break
+        history.append({"dropped": worst, "vif": float(worst_vif),
+                        "remaining": len(keep) - 1})
+        keep.remove(worst)
+
+    d = df[keep].dropna()
+    X = np.column_stack([np.ones(len(d)), d.to_numpy()])
+    final = pd.DataFrame({
+        "metric": keep,
+        "VIF": [variance_inflation_factor(X, i + 1) for i in range(len(keep))],
+    }).sort_values("VIF", ascending=False)
+    return keep, final
+
+
 def standardise(df: pd.DataFrame, metrics: list[str]) -> pd.DataFrame:
     """Log1p-then-z-score. Count metrics are heavily right-skewed; the log
     keeps a handful of 2,500-line contracts from dominating the fit."""

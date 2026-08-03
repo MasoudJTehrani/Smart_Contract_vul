@@ -1,0 +1,7 @@
+study,outcome,language,reports_detection_sign,category_mix_recoverable,note
+Shin & Williams 2008,defect/vuln presence,C/C++ (Mozilla),False,False,different outcome; DASP categories do not apply
+Chowdhury & Zulkernine 2011,vuln count,C/C++ (Mozilla),False,False,different outcome; DASP categories do not apply
+Durieux et al. 2020,tool recall,Solidity,False,True,DASP mix recoverable from SmartBugs; no complexity model
+Ghaleb & Pattabiraman 2020,tool recall (injected),Solidity,False,True,injected-bug mix is by construction; no complexity model
+Salzano et al. 2026,tool recall,Solidity,False,True,mix computed here: see new6_category_mix.csv
+This work,detector failure,Solidity,True,True,sign varies with mix across sub-benchmarks and corpora

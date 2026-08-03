@@ -1,6 +1,6 @@
 New_Smart_Contract.ipynb
 Assesing_Vulnerability.pdf
-
+paper/
 # ---------------------------------------------------------------- data
 # Raw corpora are cloned/derived, never authored here. They are large and
 # belong to their original authors; scripts/01_fetch_data.py reconstructs them.
